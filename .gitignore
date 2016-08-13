@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+dimeteo.db
+dimeteo.log
+Adafruit_BME280.py
+six.py
+test.py

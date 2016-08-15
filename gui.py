@@ -27,8 +27,13 @@ class mgraf:
 		
 		## X-axis list
 		
-		# list of datetime from the past to the future each 3 hours
-		x_axis_list = []
+		# list of datetimes from the past to the future 
+		# - each 3 hours
+		# - each 1 hour
+		# - each 20 mins
+		x_axis_list_3h = []
+		x_axis_list_1h = []
+		x_axis_list_20m = []
 
 		# deepness to the past and to the future in hours
 		depth = 27	
@@ -40,14 +45,42 @@ class mgraf:
 		
 		t = t_from
 		while t < t_to:
+			t_round = t.replace(minute = 0, second = 0, 
+microsecond = 0)
+			
+			# 1h
+			x_axis_list_1h.append[t_round]
+
+			# 3h
 			if t.hour % 3 == 0:
-				x_axis_list.append(t)
+				x_axis_list_3h.append(t_round)
+
+			# 20min
+			x_axis_list_20m.append(t_round)
+			x_axis_list_20m.append(t_round + dt.timedelta(minutes 
+= 20)
+			x_axis_list_20m.append(t_round + dt.timedelta(minutes 
+= 40)
+
 			t += dt.timedelta(hours = 1)
 			
-		self.x_axis_list = x_axis_list # list of datetime
+		self.x_axis_list_3h = x_axis_list_3h
+		self.x_axis_list_1h = x_axis_list_1h
+		self.x_axis_list_20m = x_axis_list_20m 
 			
 		
-		
+		## Density
+
+		# Number of pixels in 20 min = 2px for width 320px
+		self.density_20m = int(X / ((len(x_axis_list_1h) - 2) * 3 ))
+
+		# Number of pixels in 1 hour
+		self.density_1h = self.density_20m * 3
+
+		# Number of pixels in 3 hour		
+		self.density_3h = self.density_1h * 3
+
+	
 		## X-axis Shift
 		#                          X0
 		#                          |
@@ -56,30 +89,22 @@ class mgraf:
 		#                        10:22
 		#
 		
-		# timedelta in minutes	
-		shift_delta = t_now - x_axis_list[8].replace(minute = 0, second = 0, microsecond = 0)
-		shift_delta_min = shift_delta.seconds / 60
-
-		# number of pixels in 1 hour, in pix	
-		self.x_density = int (X / (2 * depth)) + 1
-		
-		# 1 step = 1/3 h = 20 min, in pix
-		self.x_step = int(self.x_density / 3)
-		
-		# X-axis shift in pixels
+		shift_delta = t_now - x_axis_list_3h[8])
+		shift_delta_min = shift_delta.seconds / 60 # shift in minutes
 		steps = int(shift_delta_min / 20)
-		self.x_axis_shift = steps * self.x_step
+		self.x_axis_shift = steps * self.density_20m
 		
 		
 		# X-axis coordinates
 		x_center = X / 2
-		x_start = x_center - depth * self.x_density + self.x_axis_shift
+		x_start = x_center - depth * self.density_1h - 
+self.x_axis_shift
 		
 		x_axis_coords = []
 		coords = x_start
 		for i in self.x_axis_list:
 			x_axis_coords.append(coords)
-			coords += 3 * self.x_density
+			coords += self.x_density_3h
 			
 		self.x_axis_coords = x_axis_coords
 			

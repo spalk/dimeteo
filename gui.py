@@ -27,7 +27,7 @@ class mgraf:
 		
 		## X-axis list
 		
-		# list of datetimes from the past to the future 
+		# list of datetimes from the past to the future
 		# - each 3 hours
 		# - each 1 hour
 		# - each 20 mins
@@ -45,11 +45,11 @@ class mgraf:
 		
 		t = t_from
 		while t < t_to:
-			t_round = t.replace(minute = 0, second = 0, 
+			t_round = t.replace(minute = 0, second = 0,
 microsecond = 0)
 			
 			# 1h
-			x_axis_list_1h.append[t_round]
+			x_axis_list_1h.append(t_round)
 
 			# 3h
 			if t.hour % 3 == 0:
@@ -57,16 +57,14 @@ microsecond = 0)
 
 			# 20min
 			x_axis_list_20m.append(t_round)
-			x_axis_list_20m.append(t_round + dt.timedelta(minutes 
-= 20)
-			x_axis_list_20m.append(t_round + dt.timedelta(minutes 
-= 40)
+			x_axis_list_20m.append(t_round + dt.timedelta(minutes = 20))
+			x_axis_list_20m.append(t_round + dt.timedelta(minutes = 40))
 
 			t += dt.timedelta(hours = 1)
 			
 		self.x_axis_list_3h = x_axis_list_3h
 		self.x_axis_list_1h = x_axis_list_1h
-		self.x_axis_list_20m = x_axis_list_20m 
+		self.x_axis_list_20m = x_axis_list_20m
 			
 		
 		## Density
@@ -89,30 +87,40 @@ microsecond = 0)
 		#                        10:22
 		#
 		
-		shift_delta = t_now - x_axis_list_3h[8])
+		shift_delta = t_now - x_axis_list_3h[8]
 		shift_delta_min = shift_delta.seconds / 60 # shift in minutes
-		steps = int(shift_delta_min / 20)
+		steps = int(shift_delta_min / 20) - 9
 		self.x_axis_shift = steps * self.density_20m
-		
+		print (x_axis_list_3h[8])
 		
 		# X-axis coordinates
 		x_center = X / 2
-		x_start = x_center - depth * self.density_1h - 
-self.x_axis_shift
+		x_start = x_center - depth * self.density_1h - self.x_axis_shift
 		
-		x_axis_coords = []
+		x_axis_coords_3h = []
 		coords = x_start
-		for i in self.x_axis_list:
-			x_axis_coords.append(coords)
-			coords += self.x_density_3h
+		for i in self.x_axis_list_3h:
+			x_axis_coords_3h.append(coords)
+			coords += self.density_3h
 			
-		self.x_axis_coords = x_axis_coords
+		self.x_axis_coords_3h = x_axis_coords_3h
+		
+		x_axis_coords_1h = []
+		coords = x_start - self.density_1h
+		for i in self.x_axis_list_1h:
+			x_axis_coords_1h.append(coords)
+			coords += self.density_1h
+			
+		self.x_axis_coords_1h = x_axis_coords_1h
+		
+
 			
 		
 	def x_axis(self, padding_bottom = 0, color = 0, angle = 0, font = 0, tags = ''):
-		x = self.x_axis_coords
+		x_3h = self.x_axis_coords_3h
+		x_1h = self.x_axis_coords_1h
 		y = Y - padding_bottom
-		labels = self.x_axis_list
+		labels = self.x_axis_list_3h
 		
 		if color == 0:
 			color = self.default_color
@@ -121,15 +129,34 @@ self.x_axis_shift
 			font = ('tahoma', 8)
 
 	
-		for i in range(len(self.x_axis_list)):
+		for i in range(len(labels)):
 			self.canvas.create_text(
-				x[i],	
+				x_3h[i],	
 				y,
 				text = labels[i].replace(minute = 0, second = 0).strftime('%H:%M'),
 				fill = color,
 				font = font,
 				angle = angle,
-				tags = tags)
+				tags = tags
+			)
+				
+		for i in range(len(self.x_axis_coords_1h)):
+			if self.x_axis_list_1h[i].hour == 0:
+				self.canvas.create_line(
+					x_1h[i],
+					y-200,
+					x_1h[i],
+					y-14,
+					fill = 'green',
+					dash=(4, 4)
+				)
+			else:
+				self.canvas.create_line(
+					x_1h[i],
+					y-18,
+					x_1h[i],
+					y-14
+				)
 			
 class Interface(Tk):
 	def __init__(self, *args, **kwargs):
@@ -144,7 +171,7 @@ class Interface(Tk):
 		intf = mgraf(self.canvas, 'blue')
 		intf.x_axis(15, 'green', 90, ('tahoma', 7), 'x_labels')
 		
-		self.canvas.create_line(X/2, 0, X/2, 200)
+		self.canvas.create_line(X/2, 0, X/2, 200, fill = 'red')
 		
 		self.canvas.pack()
 	

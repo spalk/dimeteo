@@ -45,8 +45,7 @@ class mgraf:
 		
 		t = t_from
 		while t < t_to:
-			t_round = t.replace(minute = 0, second = 0,
-microsecond = 0)
+			t_round = t.replace(minute = 0, second = 0, microsecond = 0)
 			
 			# 1h
 			x_axis_list_1h.append(t_round)
@@ -91,7 +90,6 @@ microsecond = 0)
 		shift_delta_min = shift_delta.seconds / 60 # shift in minutes
 		steps = int(shift_delta_min / 20) - 9
 		self.x_axis_shift = steps * self.density_20m
-		print (x_axis_list_3h[8])
 		
 		# X-axis coordinates
 		x_center = X / 2
@@ -116,7 +114,7 @@ microsecond = 0)
 
 			
 		
-	def x_axis(self, padding_bottom = 0, color = 0, angle = 0, font = 0, tags = ''):
+	def x_axis(self, padding_bottom = 0, color = 0, angle = 0, font = 0):
 		x_3h = self.x_axis_coords_3h
 		x_1h = self.x_axis_coords_1h
 		y = Y - padding_bottom
@@ -137,7 +135,7 @@ microsecond = 0)
 				fill = color,
 				font = font,
 				angle = angle,
-				tags = tags
+				tags = 'x_labels'
 			)
 				
 		for i in range(len(self.x_axis_coords_1h)):
@@ -148,15 +146,22 @@ microsecond = 0)
 					x_1h[i],
 					y-14,
 					fill = 'green',
-					dash=(4, 4)
+					dash=(4, 4),
+					tags = 'x_dashes'
 				)
 			else:
 				self.canvas.create_line(
 					x_1h[i],
 					y-18,
 					x_1h[i],
-					y-14
+					y-14,
+					tags = 'x_dashes'
 				)
+				
+	def center_line (self, y_from, y_to, color):
+		self.canvas.create_line(X/2, y_from, X/2, y_to, fill = color)
+		
+	
 			
 class Interface(Tk):
 	def __init__(self, *args, **kwargs):
@@ -164,16 +169,27 @@ class Interface(Tk):
 
 		window = Toplevel(self,  bg='gray')
 		window.overrideredirect(1)
-		window.geometry('%sx%s' % (X, Y)) # сделать определение разрешения экрана
+		window.geometry('%sx%s' % (X, Y))
 		
 		self.canvas = Canvas(window, width = X, height= Y)
 
-		intf = mgraf(self.canvas, 'blue')
-		intf.x_axis(15, 'green', 90, ('tahoma', 7), 'x_labels')
-		
-		self.canvas.create_line(X/2, 0, X/2, 200, fill = 'red')
-		
+		self.intf = mgraf(self.canvas, 'blue')
+		self.intf.x_axis(15, 'green', 90, ('tahoma', 7))
+		self.intf.center_line(0, 200, 'red')
+	
 		self.canvas.pack()
+		
+		self.update_x_axis()
+		
+		
+	
+	def update_x_axis(self):
+		self.intf.update_params()
+		self.canvas.delete("x_dashes", "x_labels")
+		self.intf.x_axis(15, 'green', 90, ('tahoma', 7))
+		self.after(300000, self.update_x_axis) # 5 min
+		
+		
 	
 
 root = Interface()

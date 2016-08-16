@@ -95,6 +95,7 @@ class mgraf:
 		x_center = X / 2
 		x_start = x_center - depth * self.density_1h - self.x_axis_shift
 		
+		# 3h		
 		x_axis_coords_3h = []
 		coords = x_start
 		for i in self.x_axis_list_3h:
@@ -103,6 +104,7 @@ class mgraf:
 			
 		self.x_axis_coords_3h = x_axis_coords_3h
 		
+		# 1h
 		x_axis_coords_1h = []
 		coords = x_start - self.density_1h
 		for i in self.x_axis_list_1h:
@@ -111,8 +113,12 @@ class mgraf:
 			
 		self.x_axis_coords_1h = x_axis_coords_1h
 		
+		# 20min
+		x_axis_coords_20m = [] 
+		coords = x_start - self.density_1h # ?
 
-			
+		# 10min
+		x_axis_coords_10m = []
 		
 	def x_axis(self, padding_bottom = 0, color = 0, angle = 0, font = 0):
 		x_3h = self.x_axis_coords_3h

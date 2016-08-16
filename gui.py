@@ -101,28 +101,40 @@ class mgraf:
 		for i in self.x_axis_list_3h:
 			x_axis_coords_3h.append(coords)
 			coords += self.density_3h
-			
 		self.x_axis_coords_3h = x_axis_coords_3h
 		
 		# 1h
 		x_axis_coords_1h = []
-		coords = x_start - self.density_1h
+		coords = x_start
 		for i in self.x_axis_list_1h:
 			x_axis_coords_1h.append(coords)
-			coords += self.density_1h
-			
+			coords += self.density_1h			
 		self.x_axis_coords_1h = x_axis_coords_1h
 		
 		# 20min
-		x_axis_coords_20m = [] 
-		coords = x_start - self.density_1h # ?
+		x_axis_coords_20m = []
+		coords = x_start
+		for i in self.x_axis_list_20m:
+			x_axis_coords_20m.append(coords)
+			coords += self.density_20m
+		self.x_axis_coords_20m = x_axis_coords_20m
 
 		# 10min
 		x_axis_coords_10m = []
-		
+		coords = x_start# - self.density_1h # ?
+		for i in self.x_axis_list_20m:
+			x_axis_coords_10m.append(coords)
+			coords += self.density_20m / 2
+			x_axis_coords_10m.append(coords)
+			coords += self.density_20m / 2
+		self.x_axis_coords_10m = x_axis_coords_10m
+
 	def x_axis(self, padding_bottom = 0, color = 0, angle = 0, font = 0):
 		x_3h = self.x_axis_coords_3h
 		x_1h = self.x_axis_coords_1h
+		#x_20m = self.x_axis_coords_20m
+		#x_10m = self.x_axis_coords_10m
+		
 		y = Y - padding_bottom
 		labels = self.x_axis_list_3h
 		
@@ -143,26 +155,25 @@ class mgraf:
 				angle = angle,
 				tags = 'x_labels'
 			)
-				
-		for i in range(len(self.x_axis_coords_1h)):
-			if self.x_axis_list_1h[i].hour == 0:
+			if labels[i].hour == 0:
 				self.canvas.create_line(
-					x_1h[i],
+					x_3h[i],
 					y-200,
-					x_1h[i],
+					x_3h[i],
 					y-14,
 					fill = 'green',
 					dash=(4, 4),
 					tags = 'x_dashes'
 				)
-			else:
-				self.canvas.create_line(
-					x_1h[i],
-					y-18,
-					x_1h[i],
-					y-14,
-					tags = 'x_dashes'
-				)
+				
+		for i in range(len(x_1h)):
+			self.canvas.create_line(
+				x_1h[i],
+				y-18,
+				x_1h[i],
+				y-14,
+				tags = 'x_dashes'
+			)
 				
 	def center_line (self, y_from, y_to, color):
 		self.canvas.create_line(X/2, y_from, X/2, y_to, fill = color)
@@ -193,7 +204,7 @@ class Interface(Tk):
 		self.intf.update_params()
 		self.canvas.delete("x_dashes", "x_labels")
 		self.intf.x_axis(15, 'green', 90, ('tahoma', 7))
-		self.after(300000, self.update_x_axis) # 5 min
+		self.after(5000, self.update_x_axis) # 5 min
 		
 		
 	

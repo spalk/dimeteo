@@ -169,6 +169,37 @@ class Gui_Data:
         connection = sqlite3.connect('dimeteo.db')
         self.cur = connection.cursor()
 
+
+    def get_sensor_data(self, dt_from, dt_to, sensor_name):
+        self.cur.execute("""SELECT *
+                            FROM sensors
+                            WHERE sensors.datetime
+                            BETWEEN
+                            "%s"
+                            AND
+                            "%s"
+                            AND
+                            sensor_name  = '%s'
+                            ORDER BY datetime(sensors.datetime) ASC"""
+                            % (dt_from, dt_to, sensor_name)
+                         )
+        return self.cur.fetchall()
+
+    def get_sensor_avg(self, dt_from, dt_to, sensor_name):
+        query = """SELECT
+                   avg(value)
+                   FROM sensors
+                   WHERE sensors.datetime
+                   BETWEEN
+                   '%s'
+                   AND
+                   '%s'
+                   AND
+                   sensor_name  = '%s'""" % (dt_from, dt_to, sensor_name)
+        self.cur.execute(query)
+        return self.cur.fetchall()
+
+
     def get_temp_24h(self):
         self.cur.execute("""SELECT *
                             FROM sensors

@@ -121,13 +121,44 @@ class mgraf:
 
 		# 10min
 		x_axis_coords_10m = []
-		coords = x_start# - self.density_1h # ?
+		coords = x_start
 		for i in self.x_axis_list_20m:
 			x_axis_coords_10m.append(coords)
 			coords += self.density_20m / 2
 			x_axis_coords_10m.append(coords)
 			coords += self.density_20m / 2
 		self.x_axis_coords_10m = x_axis_coords_10m
+		
+		
+		## Graph coordinates
+		
+		# Temperature history
+		db_data =  db.Gui_Data()
+		
+		temp_hist_vals = []
+		count = 0
+		for i in x_axis_list_20m:
+			if i < t_now:
+				t_avg = db_data.get_sensor_avg(
+						i - dt.timedelta(minutes = 20),
+						i,
+						'temp_DS18B20'
+					)[0][0]
+				temp_hist_vals.append(round(t_avg, 2))
+				print(i, round(t_avg,2))
+
+
+
+		#for i in sorted(x_axis_list_20m):
+			#print(i)
+		
+		dt_mask = '%Y-%m-%d %H:%M:%S'
+		#datetime.datetime.strptime('2016-08-13 01:46:36', '%Y-%m-%d %H:%M:%S')
+		
+		
+
+		
+		# Temperature forecast
 
 	def x_axis(self, padding_bottom = 0, color = 0, angle = 0, font = 0):
 		x_3h = self.x_axis_coords_3h
@@ -161,8 +192,8 @@ class mgraf:
 					y-200,
 					x_3h[i],
 					y-14,
-					fill = 'green',
-					dash=(4, 4),
+					fill = 'blue',
+					dash=1,
 					tags = 'x_dashes'
 				)
 				
@@ -176,7 +207,18 @@ class mgraf:
 			)
 				
 	def center_line (self, y_from, y_to, color):
-		self.canvas.create_line(X/2, y_from, X/2, y_to, fill = color)
+		self.canvas.create_line(X/2, y_from, X/2, y_to, fill = color, width = 2)
+		
+	def graf(self, data, color, smooth = 0, width = 0, dash = 0, tag = ''):
+		graf_line = self.canvas.create_line(
+			data,
+			fill =
+			color,
+			smooth = smooth,
+			width = width,
+			tags = tags)
+		if dash != 0:
+			self.canvas.itemconfig(graf_line, dash = dash)
 		
 	
 			
@@ -192,7 +234,7 @@ class Interface(Tk):
 
 		self.intf = mgraf(self.canvas, 'blue')
 		self.intf.x_axis(15, 'green', 90, ('tahoma', 7))
-		self.intf.center_line(0, 200, 'red')
+		self.intf.center_line(0, 204, 'red')
 	
 		self.canvas.pack()
 		

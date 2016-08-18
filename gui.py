@@ -156,7 +156,13 @@ class mgraf:
 		#datetime.datetime.strptime('2016-08-13 01:46:36', '%Y-%m-%d %H:%M:%S')
 		
 		
-
+		def y_graf (val, val_min, val_max, y_graph_from, g_graph_to):
+			H_pix = y_graph_to - y_graph_from
+			H_grad = val_max - val_min
+			1_grad_in_pix = int(H_pix / H_grad)
+			t_delta = (val - val_min) * 1_grad_in_pix
+			t_y = y_graph_to - t_delta
+			return = t_y
 		
 		# Temperature forecast
 

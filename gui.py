@@ -20,10 +20,10 @@ class mgraf:
 		self.canvas = canvas
 		self.default_color = default_color
 
-		self.update_params()
+		self.update_x_params()
 
 
-	def update_params(self):
+	def update_x_params(self):
 		
 		## X-axis list
 		
@@ -36,7 +36,7 @@ class mgraf:
 		x_axis_list_20m = []
 
 		# deepness to the past and to the future in hours
-		depth = 27	
+		depth = 27
 			
 		t_now = dt.datetime.now()
 		t_delta = dt.timedelta(hours = depth)
@@ -108,7 +108,7 @@ class mgraf:
 		coords = x_start
 		for i in self.x_axis_list_1h:
 			x_axis_coords_1h.append(coords)
-			coords += self.density_1h			
+			coords += self.density_1h
 		self.x_axis_coords_1h = x_axis_coords_1h
 		
 		# 20min
@@ -128,43 +128,6 @@ class mgraf:
 			x_axis_coords_10m.append(coords)
 			coords += self.density_20m / 2
 		self.x_axis_coords_10m = x_axis_coords_10m
-		
-		
-		## Graph coordinates
-		
-		# Temperature history
-		db_data =  db.Gui_Data()
-		
-		temp_hist_vals = []
-		count = 0
-		for i in x_axis_list_20m:
-			if i < t_now:
-				t_avg = db_data.get_sensor_avg(
-						i - dt.timedelta(minutes = 20),
-						i,
-						'temp_DS18B20'
-					)[0][0]
-				temp_hist_vals.append(round(t_avg, 2))
-				print(i, round(t_avg,2))
-
-
-
-		#for i in sorted(x_axis_list_20m):
-			#print(i)
-		
-		dt_mask = '%Y-%m-%d %H:%M:%S'
-		#datetime.datetime.strptime('2016-08-13 01:46:36', '%Y-%m-%d %H:%M:%S')
-		
-		
-		def y_graf (val, val_min, val_max, y_graph_from, g_graph_to):
-			H_pix = y_graph_to - y_graph_from
-			H_grad = val_max - val_min
-			1_grad_in_pix = int(H_pix / H_grad)
-			t_delta = (val - val_min) * 1_grad_in_pix
-			t_y = y_graph_to - t_delta
-			return = t_y
-		
-		# Temperature forecast
 
 	def x_axis(self, padding_bottom = 0, color = 0, angle = 0, font = 0):
 		x_3h = self.x_axis_coords_3h
@@ -215,9 +178,46 @@ class mgraf:
 	def center_line (self, y_from, y_to, color):
 		self.canvas.create_line(X/2, y_from, X/2, y_to, fill = color, width = 2)
 		
-	def graf(self, data, color, smooth = 0, width = 0, dash = 0, tag = ''):
+	def update_y_params(self):
+		
+		# Y coords calculating
+		db_data =  db.Gui_Data()
+		
+		vals = []
+		count = 0
+		for i in x_axis_list_20m:
+			if i < t_now:
+				t_avg = db_data.get_sensor_avg(
+						i - dt.timedelta(minutes = 20),
+						i,
+						'temp_DS18B20'
+					)[0][0]
+				vals.append(round(t_avg, 2))
+				print(i, round(t_avg,2))
+		max_y =
+
+
+		#for i in sorted(x_axis_list_20m):
+			#print(i)
+		
+		dt_mask = '%Y-%m-%d %H:%M:%S'
+		#datetime.datetime.strptime('2016-08-13 01:46:36', '%Y-%m-%d %H:%M:%S')
+		
+		
+		def y_graf (val, val_min, val_max, y_graph_from, g_graph_to):
+			H_pix = y_graph_to - y_graph_from
+			H_grad = val_max - val_min
+			1_grad_in_pix = int(H_pix / H_grad)
+			t_delta = (val - val_min) * 1_grad_in_pix
+			t_y = y_graph_to - t_delta
+			return = t_y
+		
+		# Temperature forecast
+	
+	def graf(self, data, y_from, y_to, color, smooth = 0, width = 0, dash = 0, tag = ''):
+		coords = self.get_coords(data)
 		graf_line = self.canvas.create_line(
-			data,
+			coords,
 			fill =
 			color,
 			smooth = smooth,

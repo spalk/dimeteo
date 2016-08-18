@@ -199,6 +199,11 @@ class Gui_Data:
         self.cur.execute(query)
         return self.cur.fetchall()
 
+    def get_max_temp(self):
+        query = """SELECT
+                   MAX(value)
+                   FROM sensors"""
+
 
     def get_temp_24h(self):
         self.cur.execute("""SELECT *

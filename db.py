@@ -199,10 +199,58 @@ class Gui_Data:
         self.cur.execute(query)
         return self.cur.fetchall()
 
-    def get_max_temp(self):
+    def get_max_temp(self, dt_from, dt_to):
         query = """SELECT
                    MAX(value)
-                   FROM sensors"""
+                   FROM sensors
+                   WHERE sensors.datetime
+                   BETWEEN
+                   '%s'
+                   AND
+                   '%s'
+                   AND
+                   sensor_name  = 'temp_DS18B20'""" % (dt_from, dt_to)
+        self.cur.execute(query)
+        return self.cur.fetchone()[0]
+
+    def get_min_temp(self, dt_from, dt_to):
+        query = """SELECT
+                   MIN(value)
+                   FROM sensors
+                   WHERE sensors.datetime
+                   BETWEEN
+                   '%s'
+                   AND
+                   '%s'
+                   AND
+                   sensor_name  = 'temp_DS18B20'""" % (dt_from, dt_to)
+        self.cur.execute(query)
+        return self.cur.fetchone()[0]
+
+    def get_max_forecast(self, dt_from, dt_to):
+        query = """SELECT
+                   MAX(temperature)
+                   FROM forecasts
+                   WHERE forecasts.datetime
+                   BETWEEN
+                   '%s'
+                   AND
+                   '%s'""" % (dt_from, dt_to)
+        self.cur.execute(query)
+        return self.cur.fetchone()[0]
+
+    def get_min_forecast(self, dt_from, dt_to):
+        query = """SELECT
+                   MIN(temperature)
+                   FROM forecasts
+                   WHERE forecasts.datetime
+                   BETWEEN
+                   '%s'
+                   AND
+                   '%s'""" % (dt_from, dt_to)
+        self.cur.execute(query)
+        return self.cur.fetchone()[0]
+
 
 
     def get_temp_24h(self):

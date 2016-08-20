@@ -39,9 +39,12 @@ class mgraf:
 		depth = 27
 			
 		t_now = dt.datetime.now()
+		self.t_now = t_now
 		t_delta = dt.timedelta(hours = depth)
 		t_from = t_now - t_delta
+		self.t_from = t_from
 		t_to = t_now + t_delta
+		self.t_to = t_to
 		
 		t = t_from
 		while t < t_to:
@@ -180,49 +183,65 @@ class mgraf:
 		
 	def update_y_params(self):
 		
-		# Y coords calculating
+		## Y coords calculating
+		
 		db_data =  db.Gui_Data()
 		
+		# DS18B20 sensor each 20 minutes average temperatur calculating
 		vals = []
 		count = 0
-		for i in x_axis_list_20m:
-			if i < t_now:
+		for i in self.x_axis_list_20m:
+			if i < self.t_now:
 				t_avg = db_data.get_sensor_avg(
 						i - dt.timedelta(minutes = 20),
 						i,
 						'temp_DS18B20'
 					)[0][0]
 				vals.append(round(t_avg, 2))
-				print(i, round(t_avg,2))
-		max_y =
 
-
-		#for i in sorted(x_axis_list_20m):
-			#print(i)
+		max_temp = db_data.get_max_temp(self.t_from, self.t_now)
+		min_temp = db_data.get_min_temp(self.t_from, self.t_now)
+		max_forc = db_data.get_max_forecast(self.t_from, self.t_to)
+		min_forc = db_data.get_min_forecast(self.t_from, self.t_to)
+		y_max = max(max_temp, max_forc)
+		y_min = min(min_temp, min_forc)
 		
-		dt_mask = '%Y-%m-%d %H:%M:%S'
-		#datetime.datetime.strptime('2016-08-13 01:46:36', '%Y-%m-%d %H:%M:%S')
-		
-		
-		def y_graf (val, val_min, val_max, y_graph_from, g_graph_to):
+		def y_graf (val, val_min, val_max, y_graph_from, y_graph_to):
 			H_pix = y_graph_to - y_graph_from
 			H_grad = val_max - val_min
-			1_grad_in_pix = int(H_pix / H_grad)
-			t_delta = (val - val_min) * 1_grad_in_pix
+			one_grad_in_pix = int(H_pix / H_grad)
+			t_delta = (val - val_min) * one_grad_in_pix
 			t_y = y_graph_to - t_delta
-			return = t_y
+			return t_y
+		
+		y_coords = []
+		for t in vals:
+			y_c = y_graf(t, y_min, y_max, self.y_from, self.y_to)
+			y_coords.append(y_c)
+		
+		temp_coords = []
+		for i in range(len(y_coords)):
+			temp_coords.append((self.x_axis_coords_20m[i],y_coords[i]))
+			
+		self.temp_coords = temp_coords
+		
+		
+		
+		
 		
 		# Temperature forecast
 	
-	def graf(self, data, y_from, y_to, color, smooth = 0, width = 0, dash = 0, tag = ''):
-		coords = self.get_coords(data)
+	def graf(self, y_from, y_to, color, smooth = 0, width = 0, dash = 0, tag = ''):
+		self.y_from = y_from
+		self.y_to = y_to
+		self.update_y_params()
 		graf_line = self.canvas.create_line(
-			coords,
-			fill =
-			color,
+			self.temp_coords,
+			fill = color,
 			smooth = smooth,
 			width = width,
-			tags = tags)
+			tags = tag
+		)
 		if dash != 0:
 			self.canvas.itemconfig(graf_line, dash = dash)
 		
@@ -241,6 +260,9 @@ class Interface(Tk):
 		self.intf = mgraf(self.canvas, 'blue')
 		self.intf.x_axis(15, 'green', 90, ('tahoma', 7))
 		self.intf.center_line(0, 204, 'red')
+		
+		self.intf.graf(50, 150, 'red')
+		
 	
 		self.canvas.pack()
 		
@@ -249,7 +271,7 @@ class Interface(Tk):
 		
 	
 	def update_x_axis(self):
-		self.intf.update_params()
+		self.intf.update_x_params()
 		self.canvas.delete("x_dashes", "x_labels")
 		self.intf.x_axis(15, 'green', 90, ('tahoma', 7))
 		self.after(5000, self.update_x_axis) # 5 min

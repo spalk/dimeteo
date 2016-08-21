@@ -183,9 +183,27 @@ class mgraf:
 		
 	def update_y_params(self):
 		
-		## Y coords calculating
-		
 		db_data =  db.Gui_Data()
+		
+		# Max|Min values of temperature in diapson from -depth to +depth
+		max_temp = db_data.get_max_temp(self.t_from, self.t_now)
+		min_temp = db_data.get_min_temp(self.t_from, self.t_now)
+		max_forc = db_data.get_max_forecast(self.t_from, self.t_to)
+		min_forc = db_data.get_min_forecast(self.t_from, self.t_to)
+		y_max = max(max_temp, max_forc)
+		y_min = min(min_temp, min_forc)
+		
+		# Function which returns temp value in pix, depends on Min|Max
+		def y_graf (val, val_min, val_max, y_graph_from, y_graph_to):
+			H_pix = y_graph_to - y_graph_from
+			H_grad = val_max - val_min
+			one_grad_in_pix = int(H_pix / H_grad)
+			t_delta = (val - val_min) * one_grad_in_pix
+			t_y = y_graph_to - t_delta
+			return int(t_y)
+		
+		
+		## History graph Y and XY coordinates calculating
 		
 		# DS18B20 sensor each 20 minutes average temperatur calculating
 		vals = []
@@ -198,54 +216,100 @@ class mgraf:
 						'temp_DS18B20'
 					)[0][0]
 				vals.append(round(t_avg, 2))
-
-		max_temp = db_data.get_max_temp(self.t_from, self.t_now)
-		min_temp = db_data.get_min_temp(self.t_from, self.t_now)
-		max_forc = db_data.get_max_forecast(self.t_from, self.t_to)
-		min_forc = db_data.get_min_forecast(self.t_from, self.t_to)
-		y_max = max(max_temp, max_forc)
-		y_min = min(min_temp, min_forc)
 		
-		def y_graf (val, val_min, val_max, y_graph_from, y_graph_to):
-			H_pix = y_graph_to - y_graph_from
-			H_grad = val_max - val_min
-			one_grad_in_pix = int(H_pix / H_grad)
-			t_delta = (val - val_min) * one_grad_in_pix
-			t_y = y_graph_to - t_delta
-			return t_y
-		
-		y_coords = []
+		# Y coords for temp history (from -depth till now)
+		y_history_coords = []
 		for t in vals:
 			y_c = y_graf(t, y_min, y_max, self.y_from, self.y_to)
-			y_coords.append(y_c)
+			y_history_coords.append(y_c)
 		
-		temp_coords = []
-		for i in range(len(y_coords)):
-			temp_coords.append((self.x_axis_coords_20m[i],y_coords[i]))
+		# XY coords for temp history
+		history_temp_coords = []
+		for i in range(len(y_history_coords)):
+			history_temp_coords.append(
+				(
+					self.x_axis_coords_20m[i]+self.x_axis_shift,
+					y_history_coords[i]
+				)
+			)
 			
-		self.temp_coords = temp_coords
+		self.history_temp_coords = history_temp_coords
 		
 		
+		## History graph Y and XY coordinates calculating
+		# RP5.ru
+		rp_vals = db_data.get_forecats_data(self.t_now, self.t_to, 'rp5.ru')
 		
+		frc_rpf_temp_coords = []
+		frc_rpf_temp_coords.append(history_temp_coords[len(history_temp_coords)-1])
+		for i in range(len(self.x_axis_list_3h)):
+			if self.x_axis_list_3h[i] > self.t_now:
+				for n in rp_vals:
+					rp_dt = dt.datetime.strptime(n[2], '%Y-%m-%d %H:%M:%S')
+					if self.x_axis_list_3h[i].hour == rp_dt.hour and \
+					   self.x_axis_list_3h[i].day == rp_dt.day:
+						frc_rpf_temp_coords.append(
+							(
+								self.x_axis_coords_3h[i]+self.x_axis_shift,
+								y_graf(n[3], y_min, y_max, self.y_from, self.y_to)
+							)
+						)
+		self.frc_rpf_temp_coords = frc_rpf_temp_coords
 		
+		# OpenWeatherMap.org
+		owm_vals = db_data.get_forecats_data(self.t_now, self.t_to, 'OpenWeatherMap.org')
 		
-		# Temperature forecast
-	
-	def graf(self, y_from, y_to, color, smooth = 0, width = 0, dash = 0, tag = ''):
+		frc_owm_temp_coords = []
+		frc_owm_temp_coords.append(history_temp_coords[len(history_temp_coords)-1])
+		for i in range(len(self.x_axis_list_3h)):
+			if self.x_axis_list_3h[i] > self.t_now:
+				for n in owm_vals:
+					owm_dt = dt.datetime.strptime(n[2], '%Y-%m-%d %H:%M:%S')
+					if self.x_axis_list_3h[i].hour == owm_dt.hour and \
+					   self.x_axis_list_3h[i].day == owm_dt.day:
+						frc_owm_temp_coords.append(
+							(
+								self.x_axis_coords_3h[i]+self.x_axis_shift,
+								y_graf(n[3], y_min, y_max, self.y_from, self.y_to)
+							)
+						)
+		self.frc_owm_temp_coords = frc_owm_temp_coords
+		
+
+	def graf(self, y_from, y_to):
 		self.y_from = y_from
 		self.y_to = y_to
 		self.update_y_params()
-		graf_line = self.canvas.create_line(
-			self.temp_coords,
-			fill = color,
-			smooth = smooth,
-			width = width,
-			tags = tag
-		)
-		if dash != 0:
-			self.canvas.itemconfig(graf_line, dash = dash)
 		
-	
+		# Graph History
+		graf_line = self.canvas.create_line(
+			self.history_temp_coords,
+			fill = 'green',
+			smooth = 1,
+			width = 3,
+			tags = 'graph_hist'
+		)
+
+		# Graph Forecast RP5
+		graf_forecast_rpf_line = self.canvas.create_line(
+			self.frc_rpf_temp_coords,
+			fill = 'blue',
+			smooth = 1,
+			width = 2,
+			#dash = 4,
+			tags = 'graph_forecast_rp5'
+		)
+		
+		# Graph Forecast OpenWeatherMap
+		graf_forecast_owm_line = self.canvas.create_line(
+			self.frc_owm_temp_coords,
+			fill = 'orange',
+			smooth = 1,
+			width = 2,
+			#dash = 4,
+			tags = 'graph_forecast_owm'
+		)
+
 			
 class Interface(Tk):
 	def __init__(self, *args, **kwargs):
@@ -257,11 +321,11 @@ class Interface(Tk):
 		
 		self.canvas = Canvas(window, width = X, height= Y)
 
-		self.intf = mgraf(self.canvas, 'blue')
+		self.intf = mgraf(self.canvas, 'gray')
 		self.intf.x_axis(15, 'green', 90, ('tahoma', 7))
 		self.intf.center_line(0, 204, 'red')
 		
-		self.intf.graf(50, 150, 'red')
+		self.intf.graf(50, 150)
 		
 	
 		self.canvas.pack()

@@ -251,43 +251,62 @@ class Gui_Data:
         self.cur.execute(query)
         return self.cur.fetchone()[0]
 
-
-
-    def get_temp_24h(self):
+    def get_forecats_data(self, dt_from, dt_to, service_name):
         self.cur.execute("""SELECT *
-                            FROM sensors
-                            WHERE sensors.datetime >= datetime('now','-1 day')
+                            FROM forecasts
+                            WHERE forecasts.datetime
+                            BETWEEN
+                            "%s"
                             AND
-                            sensor_name  = 'temp_DS18B20'
-                            ORDER BY datetime(sensors.datetime) ASC""")
-        res = self.cur.fetchall()
-        data_limit = 200 # depends on graf width in pixels
-        n = 1
-        if len(res) > data_limit:
-            n = int(len(res)/data_limit)
-            logger.info('Averaging factor is %s' % n )
-        val = []
-        koord = []
-        count = 0
-        local_summ = 0
-        for i in res:
-            if count != n:
-                count += 1
-                local_summ += i[3]
-            else:
-                koord.append(i[2])
-                koord.append(local_summ/n)
-                val.append(koord)
-                koord = []
-                local_summ = 0
-                count = 0
+                            "%s"
+                            AND
+                            src_name  = '%s'
+                            ORDER BY datetime(forecasts.datetime) ASC"""
+                            % (dt_from, dt_to, service_name)
+                         )
+        return self.cur.fetchall()
 
 
-        data = collections.OrderedDict()
-        for i in  val:
-            data[datetime.datetime.strptime(i[0], '%Y-%m-%d %H:%M:%S').strftime('%H:%M')] = i[1]
-        #ordered_data = collections.OrderedDict(sorted(data.items(), key=lambda t: t[0]))
-        return data
+
+
+
+
+
+    #def get_temp_24h(self):
+        #self.cur.execute("""SELECT *
+                            #FROM sensors
+                            #WHERE sensors.datetime >= datetime('now','-1 day')
+                            #AND
+                            #sensor_name  = 'temp_DS18B20'
+                            #ORDER BY datetime(sensors.datetime) ASC""")
+        #res = self.cur.fetchall()
+        #data_limit = 200 # depends on graf width in pixels
+        #n = 1
+        #if len(res) > data_limit:
+            #n = int(len(res)/data_limit)
+            #logger.info('Averaging factor is %s' % n )
+        #val = []
+        #koord = []
+        #count = 0
+        #local_summ = 0
+        #for i in res:
+            #if count != n:
+                #count += 1
+                #local_summ += i[3]
+            #else:
+                #koord.append(i[2])
+                #koord.append(local_summ/n)
+                #val.append(koord)
+                #koord = []
+                #local_summ = 0
+                #count = 0
+
+
+        #data = collections.OrderedDict()
+        #for i in  val:
+            #data[datetime.datetime.strptime(i[0], '%Y-%m-%d %H:%M:%S').strftime('%H:%M')] = i[1]
+        ##ordered_data = collections.OrderedDict(sorted(data.items(), key=lambda t: t[0]))
+        #return data
 
 
 

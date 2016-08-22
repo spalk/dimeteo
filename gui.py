@@ -19,6 +19,8 @@ class mgraf:
 	def __init__(self, canvas, default_color):
 		self.canvas = canvas
 		self.default_color = default_color
+		self.bgnd_color = 'gray90'
+
 
 		self.update_x_params()
 
@@ -181,7 +183,9 @@ class mgraf:
 	def center_line (self, y_from, y_to, color):
 		self.canvas.create_line(X/2, y_from, X/2, y_to, fill = color, width = 2)
 		
-	def update_y_params(self):
+	def update_y_params(self, y_from, y_to):
+		self.y_from = y_from
+		self.y_to = y_to
 		
 		db_data =  db.Gui_Data()
 		
@@ -275,12 +279,17 @@ class mgraf:
 						)
 		self.frc_owm_temp_coords = frc_owm_temp_coords
 		
-
-	def graf(self, y_from, y_to):
-		self.y_from = y_from
-		self.y_to = y_to
-		self.update_y_params()
 		
+		# Horozontal lines
+		self.y_horizontals_temp = list(range(int(y_min), int(y_max)+1))
+		self.y_horizontals_coords = []
+		for t in self.y_horizontals_temp:
+			self.y_horizontals_coords.append(y_graf(t, y_min, y_max, self.y_from, self.y_to))
+		
+		
+
+	def graf(self):
+
 		# Graph History
 		graf_line = self.canvas.create_line(
 			self.history_temp_coords,
@@ -309,23 +318,55 @@ class mgraf:
 			#dash = 4,
 			tags = 'graph_forecast_owm'
 		)
+	
+	def horizontals(self):
+		y_coords = self.y_horizontals_coords
+		y_temps = self.y_horizontals_temp
+		for i in range(len(y_coords)):
+			self.canvas.create_line(
+			0, y_coords[i], 320, y_coords[i],
+			fill = 'gray80',
+			tags = 'horizontal'
+			)
+			
+	def horizontals_labels(self):
+		y_coords = self.y_horizontals_coords
+		y_temps = self.y_horizontals_temp
+		for i in range(len(y_coords)):
+			y = y_coords[i]
+			for x in (8, 310):
+				self.canvas.create_rectangle(
+					x-8, y-3, x+8, y+3,
+					fill = self.bgnd_color,
+					width=0
+					)
+				self.canvas.create_text(
+					x, y,
+					text = y_temps[i],
+					fill = 'gray50',
+					font = ('tahoma', 6),
+					tags = 'horiz_labels'
+					)
 
 			
 class Interface(Tk):
 	def __init__(self, *args, **kwargs):
 		Tk.__init__(self, *args, **kwargs)
 
-		window = Toplevel(self,  bg='gray')
+		window = Toplevel(self,  bg='gray90')
 		window.overrideredirect(1)
 		window.geometry('%sx%s' % (X, Y))
 		
 		self.canvas = Canvas(window, width = X, height= Y)
 
-		self.intf = mgraf(self.canvas, 'gray')
+		self.intf = mgraf(self.canvas, 'gray90')
 		self.intf.x_axis(15, 'green', 90, ('tahoma', 7))
 		self.intf.center_line(0, 204, 'red')
+		self.intf.update_y_params(60, 200)
+		self.intf.horizontals()
+		self.intf.graf()
+		self.intf.horizontals_labels()
 		
-		self.intf.graf(50, 150)
 		
 	
 		self.canvas.pack()

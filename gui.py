@@ -209,6 +209,10 @@ class mgraf:
 		
 		## History graph Y and XY coordinates calculating
 		
+		# dict for labels:
+		# x, y, val, name
+		temp_labels = []
+
 		# DS18B20 sensor each 20 minutes average temperatur calculating
 		vals = []
 		count = 0
@@ -220,6 +224,11 @@ class mgraf:
 						'temp_DS18B20'
 					)[0][0]
 				vals.append(round(t_avg, 2))
+			temp_labels.append({
+						'name':'history', 
+						'value':tound(t_avg, 2)
+						})
+		self.temp_history_vals_20m = vals
 		
 		# Y coords for temp history (from -depth till now)
 		y_history_coords = []
@@ -230,17 +239,19 @@ class mgraf:
 		# XY coords for temp history
 		history_temp_coords = []
 		for i in range(len(y_history_coords)):
+			x = self.x_axis_coords_20m[i] + self.x_axis_shift
 			history_temp_coords.append(
 				(
-					self.x_axis_coords_20m[i]+self.x_axis_shift,
+					x,
 					y_history_coords[i]
 				)
+			temp_labels[i]['x'] = x
+			temp_labels[i]['y'] = y_history_coords[i]
 			)
 			
 		self.history_temp_coords = history_temp_coords
 		
 		
-		## History graph Y and XY coordinates calculating
 		# RP5.ru
 		rp_vals = db_data.get_forecats_data(self.t_now, self.t_to, 'rp5.ru')
 		
@@ -252,11 +263,21 @@ class mgraf:
 					rp_dt = dt.datetime.strptime(n[2], '%Y-%m-%d %H:%M:%S')
 					if self.x_axis_list_3h[i].hour == rp_dt.hour and \
 					   self.x_axis_list_3h[i].day == rp_dt.day:
+						x = self.x_axis_coords_3h[i] 
++ self.x_axis_shift
+						y = y_graf(n[3], y_min, 
+y_max, self.y_from, self.y_to)
 						frc_rpf_temp_coords.append(
 							(
-								self.x_axis_coords_3h[i]+self.x_axis_shift,
-								y_graf(n[3], y_min, y_max, self.y_from, self.y_to)
+								x,
+								y
 							)
+						temp_values.append({
+							'x':x,
+							'y':y,
+							'value':n[3],
+							'name':'rp5'
+						})
 						)
 		self.frc_rpf_temp_coords = frc_rpf_temp_coords
 		
@@ -278,6 +299,8 @@ class mgraf:
 							)
 						)
 		self.frc_owm_temp_coords = frc_owm_temp_coords
+
+		self.temp_values = temp_values
 		
 		
 		# Horozontal lines
@@ -286,7 +309,16 @@ class mgraf:
 		for t in self.y_horizontals_temp:
 			self.y_horizontals_coords.append(y_graf(t, y_min, y_max, self.y_from, self.y_to))
 		
-		
+
+
+		# Vertical lines
+		for i in temp_values:
+			self.canvas.create_line(
+				i['x'],
+				i['y'] + 10, # vertical shift from graf
+				i['x'],
+				55 # distance to x-axis
+			)		
 
 	def graf(self):
 
@@ -339,7 +371,8 @@ class mgraf:
 					x-8, y-3, x+8, y+3,
 					fill = self.bgnd_color,
 					width=0
-					)
+					)		
+
 				self.canvas.create_text(
 					x, y,
 					text = y_temps[i],
@@ -348,7 +381,83 @@ class mgraf:
 					tags = 'horiz_labels'
 					)
 
+	def temp_labels(self):
+		# Color Scheme should be Global. Replace somewhere to the top [TODO]
+		self.color_scheme = {
+				'history':'green',
+				'rp5':'blue',
+				'owm':'orange'
+				}
+
+		# According to optical center temp labels appeares above or below
+		optical_center = self.y_from + (self.y_to - self.y_from) / 2
+		
+		shift = (0,0) # for all labels
+		y_shift = 10 # for multiple labels		
+
+		def get_snother_y(x, cur_name):
+			result = False
 			
+			if cur_name = 'rp5':
+				f_name = 'owm'
+			else:
+				f_name = 'rp5'
+
+			for point in self.temp_labels:
+				if point['x'] == x and point['name'] == 
+f_name:
+	 				result = point['y']
+					break
+			return result
+		
+		for point in self.temp_labels:
+			if point['name'] == 'history':
+				x = point['x'] + shift[0]
+				y = point['y'] + shift [1]
+
+			else:
+				anotrer_y = get_another_y(point['x'], 
+point['name')]
+				if another_y:
+					if point['y'] < optical_center:
+						if point['y'] < another_y:
+							x = point['x'] + 
+shift[0]
+							y = point['y'] + 
+shift[1] - shift_y
+						else:
+							x = point['x'] + 
+shift[0]
+							y = point['y'] + 
+shift[1]
+					else:
+						if point['y'] < another_y:
+							x = point['x'] + 
+shift[0]
+							y = pount['y'] + 
+shift[1]
+						else:
+							x = point['x'] + 
+shift[0]
+							y = point['y'] + 
+shift[0] + shift_y
+											
+
+
+				else:
+					x = point['x'] + shift[0]
+					y = poiny['y'] + shift[1]
+
+			self.canvas.create_text(
+				x,
+				y,
+				text = point['value'],
+				fill = self.color_scheme[point['name']]
+			)
+	
+
+
+
 class Interface(Tk):
 	def __init__(self, *args, **kwargs):
 		Tk.__init__(self, *args, **kwargs)

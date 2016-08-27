@@ -7,7 +7,7 @@ import itertools
 import db#, sensors
 
 # Display resolution
-X = 320
+X = 320	
 Y = 240
 
 class mgraf:
@@ -216,6 +216,7 @@ class mgraf:
 		# DS18B20 sensor each 20 minutes average temperatur calculating
 		vals = []
 		count = 0
+		temp_labels_indexes = []
 		for i in self.x_axis_list_20m:
 			if i < self.t_now:
 				t_avg = db_data.get_sensor_avg(
@@ -224,10 +225,14 @@ class mgraf:
 						'temp_DS18B20'
 					)[0][0]
 				vals.append(round(t_avg, 2))
-			temp_labels.append({
-						'name':'history', 
-						'value':tound(t_avg, 2)
+
+				if i.minute == 0 and i.hour in (0,3,6,9,12,15,18,21):
+					temp_labels.append({
+						'name':'history',
+						'value':int(t_avg)
 						})
+					temp_labels_indexes.append(count)
+				count += 1
 		self.temp_history_vals_20m = vals
 		
 		# Y coords for temp history (from -depth till now)
@@ -238,17 +243,20 @@ class mgraf:
 		
 		# XY coords for temp history
 		history_temp_coords = []
+		count = 0
 		for i in range(len(y_history_coords)):
 			x = self.x_axis_coords_20m[i] + self.x_axis_shift
 			history_temp_coords.append(
-				(
+					(
 					x,
 					y_history_coords[i]
+					)
 				)
-			temp_labels[i]['x'] = x
-			temp_labels[i]['y'] = y_history_coords[i]
-			)
-			
+			if i in temp_labels_indexes:
+				temp_labels[count]['x'] = x
+				temp_labels[count]['y'] = y_history_coords[i]
+				count += 1
+
 		self.history_temp_coords = history_temp_coords
 		
 		
@@ -263,24 +271,22 @@ class mgraf:
 					rp_dt = dt.datetime.strptime(n[2], '%Y-%m-%d %H:%M:%S')
 					if self.x_axis_list_3h[i].hour == rp_dt.hour and \
 					   self.x_axis_list_3h[i].day == rp_dt.day:
-						x = self.x_axis_coords_3h[i] 
-+ self.x_axis_shift
-						y = y_graf(n[3], y_min, 
-y_max, self.y_from, self.y_to)
+						x = self.x_axis_coords_3h[i] + self.x_axis_shift
+						y = y_graf(n[3], y_min, y_max, self.y_from, self.y_to)
 						frc_rpf_temp_coords.append(
-							(
+								(
 								x,
 								y
+								)
 							)
-						temp_values.append({
+						temp_labels.append({
 							'x':x,
 							'y':y,
-							'value':n[3],
+							'value':int(n[3]),
 							'name':'rp5'
 						})
-						)
 		self.frc_rpf_temp_coords = frc_rpf_temp_coords
-		
+
 		# OpenWeatherMap.org
 		owm_vals = db_data.get_forecats_data(self.t_now, self.t_to, 'OpenWeatherMap.org')
 		
@@ -292,15 +298,23 @@ y_max, self.y_from, self.y_to)
 					owm_dt = dt.datetime.strptime(n[2], '%Y-%m-%d %H:%M:%S')
 					if self.x_axis_list_3h[i].hour == owm_dt.hour and \
 					   self.x_axis_list_3h[i].day == owm_dt.day:
+						x = self.x_axis_coords_3h[i]+self.x_axis_shift
+						y = y_graf(n[3], y_min, y_max, self.y_from, self.y_to)
 						frc_owm_temp_coords.append(
 							(
-								self.x_axis_coords_3h[i]+self.x_axis_shift,
-								y_graf(n[3], y_min, y_max, self.y_from, self.y_to)
+								x,
+								y
 							)
 						)
+						temp_labels.append({
+							'x':x,
+							'y':y,
+							'value':int(n[3]),
+							'name':'owm'
+						})
 		self.frc_owm_temp_coords = frc_owm_temp_coords
 
-		self.temp_values = temp_values
+		self.temp_labels = temp_labels
 		
 		
 		# Horozontal lines
@@ -311,21 +325,26 @@ y_max, self.y_from, self.y_to)
 		
 
 
-		# Vertical lines
-		for i in temp_values:
-			self.canvas.create_line(
-				i['x'],
-				i['y'] + 10, # vertical shift from graf
-				i['x'],
-				55 # distance to x-axis
-			)		
+		## Vertical lines
+		for i in temp_labels:
+			try:
+				self.canvas.create_line(
+					i['x'],
+					i['y'], # vertical shift from graf
+					i['x'],
+					200, # distance to x-axis,
+					dash = 4,
+					fill = 'medium orchid'
+				)
+			except:
+				pass
 
 	def graf(self):
 
 		# Graph History
 		graf_line = self.canvas.create_line(
 			self.history_temp_coords,
-			fill = 'green',
+			fill = 'green2',
 			smooth = 1,
 			width = 3,
 			tags = 'graph_hist'
@@ -334,20 +353,19 @@ y_max, self.y_from, self.y_to)
 		# Graph Forecast RP5
 		graf_forecast_rpf_line = self.canvas.create_line(
 			self.frc_rpf_temp_coords,
-			fill = 'blue',
-			smooth = 1,
+			fill = 'blue2',
+			smooth = 0,
+			#splinesteps = 1,
 			width = 2,
-			#dash = 4,
 			tags = 'graph_forecast_rp5'
 		)
 		
 		# Graph Forecast OpenWeatherMap
 		graf_forecast_owm_line = self.canvas.create_line(
 			self.frc_owm_temp_coords,
-			fill = 'orange',
-			smooth = 1,
+			fill = 'orange2',
+			#smooth = 0,
 			width = 2,
-			#dash = 4,
 			tags = 'graph_forecast_owm'
 		)
 	
@@ -381,78 +399,58 @@ y_max, self.y_from, self.y_to)
 					tags = 'horiz_labels'
 					)
 
-	def temp_labels(self):
+	def temper_labels(self):
 		# Color Scheme should be Global. Replace somewhere to the top [TODO]
 		self.color_scheme = {
 				'history':'green',
 				'rp5':'blue',
-				'owm':'orange'
+				'owm':'orange4'
 				}
 
-		# According to optical center temp labels appeares above or below
-		optical_center = self.y_from + (self.y_to - self.y_from) / 2
-		
-		shift = (0,0) # for all labels
-		y_shift = 10 # for multiple labels		
+		shift = (0,-10) # for all labels
+		y_shift = 10 # for multiple labels
 
-		def get_snother_y(x, cur_name):
+		def get_another_y(x, cur_name):
 			result = False
 			
-			if cur_name = 'rp5':
+			if cur_name == 'rp5':
 				f_name = 'owm'
 			else:
 				f_name = 'rp5'
-
-			for point in self.temp_labels:
-				if point['x'] == x and point['name'] == 
-f_name:
-	 				result = point['y']
-					break
+						
+			for p in self.temp_labels:
+				if p['x'] == x and p['name'] == f_name:
+					result = p['y']
 			return result
-		
+			
 		for point in self.temp_labels:
-			if point['name'] == 'history':
-				x = point['x'] + shift[0]
-				y = point['y'] + shift [1]
-
-			else:
-				anotrer_y = get_another_y(point['x'], 
-point['name')]
-				if another_y:
-					if point['y'] < optical_center:
-						if point['y'] < another_y:
-							x = point['x'] + 
-shift[0]
-							y = point['y'] + 
-shift[1] - shift_y
-						else:
-							x = point['x'] + 
-shift[0]
-							y = point['y'] + 
-shift[1]
-					else:
-						if point['y'] < another_y:
-							x = point['x'] + 
-shift[0]
-							y = pount['y'] + 
-shift[1]
-						else:
-							x = point['x'] + 
-shift[0]
-							y = point['y'] + 
-shift[0] + shift_y
-											
-
-
-				else:
+			try:
+				if 1:#point['name'] == 'history':
 					x = point['x'] + shift[0]
-					y = poiny['y'] + shift[1]
+					y = point['y'] + shift [1]
 
+				#else:
+					#another_y = get_another_y(point['x'], point['name'])
+					#if another_y:
+						#print(another_y)
+						#if point['y'] < another_y:
+							#x = point['x'] + shift[0]
+							#y = point['y'] + shift[1] - shift_y
+						#else:
+							#x = point['x'] + shift[0]
+							#y = another_y + shift[1]
+
+					#else:
+						#x = point['x'] + shift[0]
+						#y = point['y'] + shift[1]
+			except:
+				pass
 			self.canvas.create_text(
 				x,
 				y,
 				text = point['value'],
-				fill = self.color_scheme[point['name']]
+				fill = self.color_scheme[point['name']],
+				font = ('tahoma',6)
 			)
 	
 
@@ -474,8 +472,8 @@ class Interface(Tk):
 		self.intf.update_y_params(60, 200)
 		self.intf.horizontals()
 		self.intf.graf()
-		self.intf.horizontals_labels()
-		
+		#self.intf.horizontals_labels()
+		self.intf.temper_labels()
 		
 	
 		self.canvas.pack()

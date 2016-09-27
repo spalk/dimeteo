@@ -7,3 +7,5 @@ dimeteo.log
 Adafruit_BME280.py
 six.py
 test.py
+
+.idea/

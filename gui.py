@@ -425,24 +425,24 @@ class mgraf:
 			
 		for point in self.temp_labels:
 			try:
-				if 1:#point['name'] == 'history':
+				if point['name'] == 'history':
 					x = point['x'] + shift[0]
 					y = point['y'] + shift [1]
 
-				#else:
-					#another_y = get_another_y(point['x'], point['name'])
-					#if another_y:
-						#print(another_y)
-						#if point['y'] < another_y:
-							#x = point['x'] + shift[0]
-							#y = point['y'] + shift[1] - shift_y
-						#else:
-							#x = point['x'] + shift[0]
-							#y = another_y + shift[1]
+				else:
+					another_y = get_another_y(point['x'], point['name'])
+					if another_y:
+						print(another_y)
+						if point['y'] < another_y:
+							x = point['x'] + shift[0]
+							y = point['y'] + shift[1] - shift_y
+						else:
+							x = point['x'] + shift[0]
+							y = another_y + shift[1]
 
-					#else:
-						#x = point['x'] + shift[0]
-						#y = point['y'] + shift[1]
+					else:
+						x = point['x'] + shift[0]
+						y = point['y'] + shift[1]
 			except:
 				pass
 			self.canvas.create_text(
